@@ -2,7 +2,7 @@
   "Author": "FIFINE Mic Mute contributors",
   "Name": "Звук Windows",
   "Description": "Управляет мутом микрофона и переключает вывод Windows между SIMGOT и ARZOPA.",
-  "Version": "1.1.0",
+  "Version": "1.1.1",
   "SDKVersion": 1,
   "CodePath": "MicMute.exe",
   "Icon": "images/plugin.png",

@@ -15,6 +15,7 @@ namespace FifineMicMute
     {
         private const uint ActiveEndpoints = 1;
         private const ushort StringProperty = 31;
+        private static readonly Role[] PlaybackRoles = { Role.Multimedia, Role.Console, Role.Communications };
         private static readonly PropertyKey FriendlyName = new PropertyKey
         {
             Format = new Guid("A45C254E-DF1C-4EFD-8020-67D146A850E0"),
@@ -47,7 +48,7 @@ namespace FifineMicMute
                 string targetId = FindTarget(enumerator, current);
                 if (targetId != null && !string.Equals(targetId, currentId, StringComparison.OrdinalIgnoreCase))
                 {
-                    SetDefault(enumerator, targetId, currentId);
+                    SetDefault(enumerator, targetId);
                     return ReadDefault(enumerator, out currentId);
                 }
                 return current;
@@ -192,25 +193,71 @@ namespace FifineMicMute
             }
         }
 
-        private static void SetDefault(IMMDeviceEnumerator enumerator, string targetId, string previousId)
+        private static string DefaultId(IMMDeviceEnumerator enumerator, Role role)
         {
-            var policy = (IPolicyConfig)new PolicyConfigClient();
+            IMMDevice endpoint = null;
             try
             {
-                if (policy.SetDefaultEndpoint(targetId, Role.Multimedia) >= 0 &&
-                    policy.SetDefaultEndpoint(targetId, Role.Console) < 0 && previousId != null)
+                return enumerator.GetDefaultAudioEndpoint(DataFlow.Render, role, out endpoint) >= 0
+                    ? DeviceId(endpoint)
+                    : null;
+            }
+            finally
+            {
+                if (endpoint != null) Marshal.ReleaseComObject(endpoint);
+            }
+        }
+
+        private static void SetDefault(IMMDeviceEnumerator enumerator, string targetId)
+        {
+            var previous = new string[PlaybackRoles.Length];
+            for (int index = 0; index < PlaybackRoles.Length; index++)
+            {
+                previous[index] = DefaultId(enumerator, PlaybackRoles[index]);
+            }
+
+            var policy = (IPolicyConfig)new PolicyConfigClient();
+            int applied = 0;
+            try
+            {
+                for (; applied < PlaybackRoles.Length; applied++)
                 {
-                    string actualId;
-                    ReadDefault(enumerator, out actualId);
-                    if (string.Equals(actualId, targetId, StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(previous[applied], targetId, StringComparison.OrdinalIgnoreCase) &&
+                        policy.SetDefaultEndpoint(targetId, PlaybackRoles[applied]) < 0)
                     {
-                        policy.SetDefaultEndpoint(previousId, Role.Multimedia);
+                        break;
                     }
                 }
             }
             finally
             {
-                Marshal.ReleaseComObject(policy);
+                try
+                {
+                    if (applied < PlaybackRoles.Length)
+                    {
+                        RestoreDefaults(enumerator, policy, previous, targetId, applied);
+                    }
+                }
+                finally
+                {
+                    Marshal.ReleaseComObject(policy);
+                }
+            }
+        }
+
+        private static void RestoreDefaults(IMMDeviceEnumerator enumerator, IPolicyConfig policy,
+            string[] previous, string targetId, int applied)
+        {
+            for (int index = applied - 1; index >= 0; index--)
+            {
+                string oldId = previous[index];
+                Role role = PlaybackRoles[index];
+                // Restore roles that still point to the requested endpoint.
+                if (oldId != null && !string.Equals(oldId, targetId, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(DefaultId(enumerator, role), targetId, StringComparison.OrdinalIgnoreCase))
+                {
+                    policy.SetDefaultEndpoint(oldId, role);
+                }
             }
         }
 
