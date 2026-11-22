@@ -2,7 +2,7 @@
   "Author": "FIFINE Tools contributors",
   "Name": "Заряд устройств",
   "Description": "Показывает заряд I/O Aurora и Keychron Q1 HE на отдельных кнопках.",
-  "Version": "1.0.0",
+  "Version": "1.1.0",
   "SDKVersion": 1,
   "CodePath": "BatteryIndicators.exe",
   "Icon": "images/plugin.png",

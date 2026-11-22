@@ -113,7 +113,7 @@ namespace FifineTools.Battery
             }
             BatteryReading? reading = device == BatteryDevice.Mouse
                 ? await AuroraBattery.ReadAsync()
-                : ReadKeyboard();
+                : await ReadKeyboardAsync();
             if (reading.HasValue && reading.Value.Percent != saved)
             {
                 cache.Save(device, reading.Value.Percent);
@@ -134,8 +134,13 @@ namespace FifineTools.Battery
             }
         }
 
-        private static BatteryReading? ReadKeyboard()
+        private static async Task<BatteryReading?> ReadKeyboardAsync()
         {
+            BatteryReading? reading = await KeychronBattery.ReadAsync();
+            if (reading.HasValue)
+            {
+                return reading;
+            }
             int? percent = WindowsDevices.ReadKeychronBattery();
             return percent.HasValue ? new BatteryReading(percent.Value, false) : (BatteryReading?)null;
         }
