@@ -1,0 +1,37 @@
+{
+  "Author": "FIFINE Mic Mute contributors",
+  "Name": "Микрофон Windows",
+  "Description": "Переключает системный мут микрофона по умолчанию и показывает его состояние на кнопке.",
+  "Version": "1.0.0",
+  "SDKVersion": 1,
+  "CodePath": "MicMute.exe",
+  "Icon": "images/plugin.png",
+  "Category": "Звук Windows",
+  "CategoryIcon": "images/category.png",
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Software": {
+    "MinimumVersion": "3.10.201.0506"
+  },
+  "Actions": [
+    {
+      "UUID": "local.fifine.micmute.toggle",
+      "Name": "Микрофон Windows",
+      "Tooltip": "Включить или выключить микрофон по умолчанию",
+      "Icon": "images/action.png",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "images/unavailable.png",
+          "ShowTitle": false
+        }
+      ]
+    }
+  ]
+}
