@@ -1,0 +1,7 @@
+{
+  "name": "dev.fifinetools.unity-controls",
+  "version": "1.0.0",
+  "displayName": "FIFINE Unity Controls",
+  "description": "Receives Play Mode, Pause and Step commands from FIFINE Control Deck on Windows.",
+  "unity": "6000.0"
+}

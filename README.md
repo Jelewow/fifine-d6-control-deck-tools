@@ -26,3 +26,7 @@ powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\build.ps1
 ```
 
 Скрипт использует компилятор .NET Framework из Windows. Папка `.sdPlugin` и ZIP для установки появятся в `dist`.
+
+## Unity
+
+Отдельный плагин для D6 управляет Play Mode, паузой и переходом на следующий кадр. [Сборка и установка кнопок Unity](unity/README.md)

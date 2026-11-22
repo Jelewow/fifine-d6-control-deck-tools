@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Web.Script.Serialization;
+using FifineTools;
 
 namespace FifineMicMute
 {
@@ -13,18 +10,15 @@ namespace FifineMicMute
     {
         private const string ActionUuid = "local.fifine.micmute.toggle";
         private const int PollIntervalMilliseconds = 500;
-        private const int MaxMessageBytes = 1024 * 1024;
 
-        private readonly WebSocket socket;
+        private readonly StreamDockConnection connection;
         private readonly IMicrophone microphone;
         private readonly Dictionary<MicrophoneState, string> images;
-        private readonly JavaScriptSerializer json = new JavaScriptSerializer();
-        private readonly byte[] receiveBuffer = new byte[8192];
         private readonly Dictionary<string, VisibleKey> visibleKeys = new Dictionary<string, VisibleKey>();
 
-        internal DockPlugin(WebSocket socket, IMicrophone microphone, string pluginDirectory)
+        internal DockPlugin(StreamDockConnection connection, IMicrophone microphone, string pluginDirectory)
         {
-            this.socket = socket;
+            this.connection = connection;
             this.microphone = microphone;
             string imageDirectory = Path.Combine(pluginDirectory, "images");
             images = new Dictionary<MicrophoneState, string>
@@ -35,11 +29,9 @@ namespace FifineMicMute
             };
         }
 
-        internal async Task RunAsync(string pluginUuid, string registerEvent)
+        internal async Task RunAsync()
         {
-            await SendAsync(new { @event = registerEvent, uuid = pluginUuid });
-
-            Task<string> nextMessage = ReceiveAsync();
+            Task<DockEvent> nextMessage = connection.ReceiveAsync();
             Task nextPoll = null;
             while (true)
             {
@@ -54,14 +46,14 @@ namespace FifineMicMute
                     }
                 }
 
-                string message = await nextMessage;
+                DockEvent message = await nextMessage;
                 if (message == null)
                 {
                     return;
                 }
 
                 await HandleEventAsync(message);
-                nextMessage = ReceiveAsync();
+                nextMessage = connection.ReceiveAsync();
                 if (visibleKeys.Count == 0)
                 {
                     nextPoll = null;
@@ -69,34 +61,15 @@ namespace FifineMicMute
             }
         }
 
-        private async Task HandleEventAsync(string message)
+        private async Task HandleEventAsync(DockEvent message)
         {
-            Dictionary<string, object> fields;
-            try
-            {
-                fields = json.Deserialize<Dictionary<string, object>>(message);
-            }
-            catch (ArgumentException)
-            {
-                return;
-            }
-            catch (InvalidOperationException)
+            string context = message.Context;
+            if (message.Action != ActionUuid || string.IsNullOrEmpty(context))
             {
                 return;
             }
 
-            if (fields == null || GetString(fields, "action") != ActionUuid)
-            {
-                return;
-            }
-
-            string context = GetString(fields, "context");
-            if (string.IsNullOrEmpty(context))
-            {
-                return;
-            }
-
-            switch (GetString(fields, "event"))
+            switch (message.Name)
             {
                 case "willAppear":
                     visibleKeys[context] = new VisibleKey();
@@ -120,7 +93,7 @@ namespace FifineMicMute
                     continue;
                 }
 
-                await SendAsync(new
+                await connection.SendAsync(new
                 {
                     @event = "setImage",
                     context = key.Key,
@@ -130,48 +103,10 @@ namespace FifineMicMute
             }
         }
 
-        private Task SendAsync(object message)
-        {
-            byte[] bytes = Encoding.UTF8.GetBytes(json.Serialize(message));
-            return socket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
-        }
-
-        private async Task<string> ReceiveAsync()
-        {
-            using (var message = new MemoryStream())
-            {
-                WebSocketReceiveResult frame;
-                do
-                {
-                    frame = await socket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), CancellationToken.None);
-                    if (frame.MessageType == WebSocketMessageType.Close)
-                    {
-                        return null;
-                    }
-
-                    if (message.Length + frame.Count > MaxMessageBytes)
-                    {
-                        throw new InvalidDataException("Control Deck message exceeds 1 MiB.");
-                    }
-
-                    message.Write(receiveBuffer, 0, frame.Count);
-                }
-                while (!frame.EndOfMessage);
-
-                return Encoding.UTF8.GetString(message.GetBuffer(), 0, (int)message.Length);
-            }
-        }
-
         private static string LoadImage(string imageDirectory, string filename)
         {
             byte[] bytes = File.ReadAllBytes(Path.Combine(imageDirectory, filename));
             return "data:image/png;base64," + Convert.ToBase64String(bytes);
-        }
-
-        private static string GetString(Dictionary<string, object> fields, string key)
-        {
-            object value;
-            return fields.TryGetValue(key, out value) ? value as string : null;
         }
 
         private sealed class VisibleKey

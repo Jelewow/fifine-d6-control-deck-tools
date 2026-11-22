@@ -1,0 +1,5 @@
+{
+  "name": "FifineTools.UnityControls.Editor",
+  "rootNamespace": "FifineTools.UnityControls",
+  "includePlatforms": ["Editor"]
+}

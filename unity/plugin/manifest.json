@@ -1,0 +1,49 @@
+{
+  "Author": "FIFINE Tools contributors",
+  "Name": "Управление Unity",
+  "Description": "Управляет Play Mode, паузой и шагом на кадр в Unity Editor.",
+  "Version": "1.0.0",
+  "SDKVersion": 1,
+  "CodePath": "UnityControls.exe",
+  "Icon": "images/plugin.png",
+  "Category": "Unity",
+  "CategoryIcon": "images/category.png",
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Software": {
+    "MinimumVersion": "3.10.201.0506"
+  },
+  "Actions": [
+    {
+      "UUID": "local.fifine.unitycontrols.play",
+      "Name": "Play Mode",
+      "Tooltip": "Войти в Play Mode или выйти из него",
+      "Icon": "images/play-action.png",
+      "Controllers": ["Keypad"],
+      "UserTitleEnabled": false,
+      "States": [{ "Image": "images/play.png", "ShowTitle": false }]
+    },
+    {
+      "UUID": "local.fifine.unitycontrols.pause",
+      "Name": "Пауза",
+      "Tooltip": "Поставить игру на паузу или продолжить Play Mode",
+      "Icon": "images/pause-action.png",
+      "Controllers": ["Keypad"],
+      "UserTitleEnabled": false,
+      "States": [{ "Image": "images/pause.png", "ShowTitle": false }]
+    },
+    {
+      "UUID": "local.fifine.unitycontrols.step",
+      "Name": "Следующий кадр",
+      "Tooltip": "Выполнить один кадр в Play Mode",
+      "Icon": "images/step-action.png",
+      "Controllers": ["Keypad"],
+      "UserTitleEnabled": false,
+      "States": [{ "Image": "images/step.png", "ShowTitle": false }]
+    }
+  ]
+}
