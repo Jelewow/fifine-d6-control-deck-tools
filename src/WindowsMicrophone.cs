@@ -78,28 +78,6 @@ namespace FifineMicMute
             }
         }
 
-        private enum DataFlow { Capture = 1 }
-        private enum Role { Console = 0 }
-        private enum ClassContext { InProcessServer = 1 }
-
-        [ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
-        private class MMDeviceEnumerator { }
-
-        [ComImport, Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        private interface IMMDeviceEnumerator
-        {
-            [PreserveSig] int EnumAudioEndpoints(DataFlow flow, uint stateMask, out IntPtr devices);
-            [PreserveSig] int GetDefaultAudioEndpoint(DataFlow flow, Role role, out IMMDevice endpoint);
-        }
-
-        [ComImport, Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        private interface IMMDevice
-        {
-            [PreserveSig]
-            int Activate(ref Guid iid, ClassContext classContext, IntPtr activationParameters,
-                [MarshalAs(UnmanagedType.IUnknown)] out object activatedInterface);
-        }
-
         [ComImport, Guid("5CDF2C82-841E-4546-9722-0CF74078229A"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         private interface IAudioEndpointVolume
         {

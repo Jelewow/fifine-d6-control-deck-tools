@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using FifineTools;
 
@@ -8,24 +9,36 @@ namespace FifineMicMute
 {
     internal sealed class DockPlugin
     {
-        private const string ActionUuid = "local.fifine.micmute.toggle";
+        private const string MicrophoneAction = "local.fifine.micmute.toggle";
+        private const string PlaybackAction = "local.fifine.micmute.output";
         private const int PollIntervalMilliseconds = 500;
 
         private readonly StreamDockConnection connection;
         private readonly IMicrophone microphone;
-        private readonly Dictionary<MicrophoneState, string> images;
+        private readonly WindowsPlayback playback;
+        private readonly Dictionary<MicrophoneState, string> microphoneImages;
+        private readonly Dictionary<PlaybackState, string> playbackImages;
         private readonly Dictionary<string, VisibleKey> visibleKeys = new Dictionary<string, VisibleKey>();
 
-        internal DockPlugin(StreamDockConnection connection, IMicrophone microphone, string pluginDirectory)
+        internal DockPlugin(StreamDockConnection connection, IMicrophone microphone, WindowsPlayback playback,
+            string pluginDirectory)
         {
             this.connection = connection;
             this.microphone = microphone;
+            this.playback = playback;
             string imageDirectory = Path.Combine(pluginDirectory, "images");
-            images = new Dictionary<MicrophoneState, string>
+            microphoneImages = new Dictionary<MicrophoneState, string>
             {
                 { MicrophoneState.Unavailable, LoadImage(imageDirectory, "unavailable.png") },
                 { MicrophoneState.Unmuted, LoadImage(imageDirectory, "unmuted.png") },
                 { MicrophoneState.Muted, LoadImage(imageDirectory, "muted.png") }
+            };
+            playbackImages = new Dictionary<PlaybackState, string>
+            {
+                { PlaybackState.Unavailable, LoadImage(imageDirectory, "output-unavailable.png") },
+                { PlaybackState.Other, LoadImage(imageDirectory, "output-other.png") },
+                { PlaybackState.Simgot, LoadImage(imageDirectory, "output-simgot.png") },
+                { PlaybackState.Arzopa, LoadImage(imageDirectory, "output-arzopa.png") }
             };
         }
 
@@ -40,7 +53,14 @@ namespace FifineMicMute
                     nextPoll = nextPoll ?? Task.Delay(PollIntervalMilliseconds);
                     if (await Task.WhenAny(nextMessage, nextPoll) == nextPoll)
                     {
-                        await UpdateVisibleKeysAsync(microphone.Read());
+                        if (visibleKeys.Values.Any(key => key.Action == MicrophoneAction))
+                        {
+                            await UpdateAsync(MicrophoneAction);
+                        }
+                        if (visibleKeys.Values.Any(key => key.Action == PlaybackAction))
+                        {
+                            await UpdateAsync(PlaybackAction);
+                        }
                         nextPoll = null;
                         continue;
                     }
@@ -64,7 +84,7 @@ namespace FifineMicMute
         private async Task HandleEventAsync(DockEvent message)
         {
             string context = message.Context;
-            if (message.Action != ActionUuid || string.IsNullOrEmpty(context))
+            if ((message.Action != MicrophoneAction && message.Action != PlaybackAction) || string.IsNullOrEmpty(context))
             {
                 return;
             }
@@ -72,11 +92,11 @@ namespace FifineMicMute
             switch (message.Name)
             {
                 case "willAppear":
-                    visibleKeys[context] = new VisibleKey();
-                    await UpdateVisibleKeysAsync(microphone.Read());
+                    visibleKeys[context] = new VisibleKey(message.Action);
+                    await UpdateAsync(message.Action);
                     break;
                 case "keyDown":
-                    await UpdateVisibleKeysAsync(microphone.Toggle());
+                    await UpdateAsync(message.Action, toggle: true);
                     break;
                 case "willDisappear":
                     visibleKeys.Remove(context);
@@ -84,11 +104,14 @@ namespace FifineMicMute
             }
         }
 
-        private async Task UpdateVisibleKeysAsync(MicrophoneState state)
+        private async Task UpdateAsync(string action, bool toggle = false)
         {
+            string image = action == MicrophoneAction
+                ? microphoneImages[toggle ? microphone.Toggle() : microphone.Read()]
+                : playbackImages[toggle ? playback.Toggle() : playback.Read()];
             foreach (var key in visibleKeys)
             {
-                if (key.Value.LastState == state)
+                if (key.Value.Action != action || key.Value.LastImage == image)
                 {
                     continue;
                 }
@@ -97,9 +120,9 @@ namespace FifineMicMute
                 {
                     @event = "setImage",
                     context = key.Key,
-                    payload = new { image = images[state], target = 0 }
+                    payload = new { image, target = 0 }
                 });
-                key.Value.LastState = state;
+                key.Value.LastImage = image;
             }
         }
 
@@ -111,7 +134,13 @@ namespace FifineMicMute
 
         private sealed class VisibleKey
         {
-            internal MicrophoneState? LastState;
+            internal readonly string Action;
+            internal string LastImage;
+
+            internal VisibleKey(string action)
+            {
+                Action = action;
+            }
         }
     }
 }

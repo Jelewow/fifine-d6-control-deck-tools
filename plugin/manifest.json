@@ -1,8 +1,8 @@
 {
   "Author": "FIFINE Mic Mute contributors",
-  "Name": "Микрофон Windows",
-  "Description": "Переключает системный мут микрофона по умолчанию и показывает его состояние на кнопке.",
-  "Version": "1.0.0",
+  "Name": "Звук Windows",
+  "Description": "Управляет мутом микрофона и переключает вывод Windows между SIMGOT и ARZOPA.",
+  "Version": "1.1.0",
   "SDKVersion": 1,
   "CodePath": "MicMute.exe",
   "Icon": "images/plugin.png",
@@ -29,6 +29,21 @@
       "States": [
         {
           "Image": "images/unavailable.png",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "local.fifine.micmute.output",
+      "Name": "Вывод звука",
+      "Tooltip": "Переключить вывод между SIMGOT и ARZOPA",
+      "Icon": "images/output.png",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "images/output-unavailable.png",
           "ShowTitle": false
         }
       ]

@@ -8,7 +8,8 @@ namespace FifineMicMute
         private static int Main(string[] args)
         {
             return StreamDockConnection.Run(args, connection =>
-                new DockPlugin(connection, new WindowsMicrophone(), AppDomain.CurrentDomain.BaseDirectory).RunAsync());
+                new DockPlugin(connection, new WindowsMicrophone(), new WindowsPlayback(),
+                    AppDomain.CurrentDomain.BaseDirectory).RunAsync());
         }
     }
 }
