@@ -30,3 +30,7 @@ powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\build.ps1
 ## Unity
 
 Отдельный плагин для D6 управляет Play Mode, паузой и переходом на следующий кадр. [Сборка и установка кнопок Unity](unity/README.md)
+
+## Заряд устройств
+
+Два индикатора для I/O Aurora и Keychron Q1 HE. [Сборка и установка индикаторов](battery/README.md)

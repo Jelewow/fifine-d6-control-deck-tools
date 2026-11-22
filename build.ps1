@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('Microphone', 'Unity')]
+    [ValidateSet('Microphone', 'Unity', 'Battery')]
     [string]$Plugin = 'Microphone'
 )
 
@@ -20,6 +20,10 @@ if ($Plugin -eq 'Unity') {
     $sourceRoot = Join-Path $PSScriptRoot 'unity'
     $pluginId = 'local.fifine.unitycontrols'
     $archiveName = 'fifine-unity-controls'
+} elseif ($Plugin -eq 'Battery') {
+    $sourceRoot = Join-Path $PSScriptRoot 'battery'
+    $pluginId = 'local.fifine.battery'
+    $archiveName = 'fifine-battery-indicators'
 }
 
 $pluginSource = Join-Path $sourceRoot 'plugin'
@@ -32,15 +36,21 @@ New-Item -ItemType Directory -Path $package -Force | Out-Null
 $executable = Join-Path $package $manifest.CodePath
 $sources = @(Get-ChildItem -LiteralPath (Join-Path $sourceRoot 'src') -File -Filter '*.cs' | Select-Object -ExpandProperty FullName)
 $archiveContents = @($package)
+$references = @('/r:System.Web.Extensions.dll')
+if ($Plugin -ne 'Microphone') {
+    $sources += Join-Path $PSScriptRoot 'src\StreamDockConnection.cs'
+}
 if ($Plugin -eq 'Unity') {
     $editorPackage = Join-Path $sourceRoot 'package'
-    $sources += Join-Path $PSScriptRoot 'src\StreamDockConnection.cs'
     $sources += Join-Path $editorPackage 'Editor\UnityCommandProtocol.cs'
     $archiveContents += $editorPackage
     $archiveContents += Join-Path $sourceRoot 'README.md'
+} elseif ($Plugin -eq 'Battery') {
+    $references += '/r:System.Drawing.dll'
+    $archiveContents += Join-Path $sourceRoot 'README.md'
 }
 
-& $compiler /nologo /target:winexe /platform:anycpu /optimize+ /warnaserror+ /r:System.Web.Extensions.dll "/out:$executable" $sources
+& $compiler /nologo /target:winexe /platform:anycpu /codepage:65001 /optimize+ /warnaserror+ $references "/out:$executable" $sources
 if ($LASTEXITCODE -ne 0) {
     throw "C# compilation failed with exit code $LASTEXITCODE."
 }

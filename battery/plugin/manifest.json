@@ -1,0 +1,42 @@
+{
+  "Author": "FIFINE Tools contributors",
+  "Name": "Заряд устройств",
+  "Description": "Показывает заряд I/O Aurora и Keychron Q1 HE на отдельных кнопках.",
+  "Version": "1.0.0",
+  "SDKVersion": 1,
+  "CodePath": "BatteryIndicators.exe",
+  "Icon": "images/plugin.png",
+  "Category": "Заряд устройств",
+  "CategoryIcon": "images/category.png",
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Software": {
+    "MinimumVersion": "3.10.201.0506"
+  },
+  "Actions": [
+    {
+      "UUID": "local.fifine.battery.aurora",
+      "Name": "Заряд мыши",
+      "Tooltip": "Показывает заряд I/O Aurora. Нажатие обновляет показание.",
+      "Icon": "images/mouse.png",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false,
+      "States": [{ "Image": "images/mouse-empty.png", "ShowTitle": false }]
+    },
+    {
+      "UUID": "local.fifine.battery.keychron",
+      "Name": "Заряд клавиатуры",
+      "Tooltip": "Показывает заряд Keychron Q1 HE. Нажатие обновляет показание.",
+      "Icon": "images/keyboard.png",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false,
+      "States": [{ "Image": "images/keyboard-empty.png", "ShowTitle": false }]
+    }
+  ]
+}
